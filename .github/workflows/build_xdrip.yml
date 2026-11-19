@@ -158,7 +158,7 @@ jobs:
   build:
     name: Build
     needs: [validate, check_alive_and_permissions, check_latest_from_upstream]
-    runs-on: macos-26
+    runs-on: xcode-27
     permissions:
       contents: write
     if: | # runs if started manually, or if sync schedule is set and enabled and scheduled on the first Saturday each month, or if sync schedule is set and enabled and new commits were found
@@ -168,8 +168,12 @@ jobs:
           (vars.SCHEDULED_SYNC != 'false' && needs.check_latest_from_upstream.outputs.NEW_COMMITS == 'true' )
         )
     steps:
-      - name: Select Xcode version
-        run: "sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer"
+      - name: Verify Xcode and iOS SDK
+        run: |
+          xcodebuild -version
+          sdk_version="$(xcrun --sdk iphoneos --show-sdk-version)"
+          echo "iOS SDK: $sdk_version"
+          [[ ${sdk_version%%.*} == 27 ]]
       
       - name: Checkout Repo for syncing
         if: |
@@ -237,6 +241,8 @@ jobs:
       - name: Fastlane Build & Archive
         run: bundle exec fastlane build_xdrip4ios
         env:
+          # The project has empty SYMROOT and OBJROOT settings.
+          GYM_XCARGS: 'SYMROOT="${{ runner.temp }}/xdrip/Products" OBJROOT="${{ runner.temp }}/xdrip/Intermediates"'
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
           FASTLANE_KEY_ID: ${{ secrets.FASTLANE_KEY_ID }}
