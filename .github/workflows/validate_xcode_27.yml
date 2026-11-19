@@ -32,4 +32,6 @@ jobs:
         run: |
           xcodebuild -project xdrip.xcodeproj -scheme xdrip \
             -configuration Release -destination 'generic/platform=iOS' \
+            "SYMROOT=$RUNNER_TEMP/xdrip/Products" \
+            "OBJROOT=$RUNNER_TEMP/xdrip/Intermediates" \
             CODE_SIGNING_ALLOWED=NO build
